@@ -9,10 +9,10 @@
 function PokeBackIn
   {
     param (
-      [Parameter(Mandatory=$false,ParameterSetName="PortList")]
+      [Parameter(Mandatory=$false)]
       $portlist = @(20,21,22,23,25,42,53,67,68,69,80,110,119,123,135,137,138,139,143,161,162,389,443,445,636,873,993,995,1433,3306,3389,5800,5900),
 
-      [parameter(Mandatory=$false,ParameterSetName="SleepTimer")]
+      [parameter(Mandatory=$false)]
       [int32]$sleep = 5
     )
 	#
