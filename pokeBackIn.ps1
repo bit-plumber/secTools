@@ -9,25 +9,35 @@
 function PokeBackIn
   {
     param (
-      [Parameter(Mandatory=$false)]
+      [Parameter()]
       $portlist = @(20,21,22,23,25,42,53,67,68,69,80,110,119,123,135,137,138,139,143,161,162,389,443,445,636,873,993,995,1433,3306,3389,5800,5900),
 
-      [parameter(Mandatory=$false)]
+      [parameter()]
       [int32]$sleep = 5
     )
-	#
+
+    #
+    #  https://stackoverflow.com/a/48030563
+    #  https://stackoverflow.com/a/37763324
+    #  https://n3wjack.net/2013/04/22/using-a-web-client-in-powershell/
+    #
+    #declare functions
+    #
+
     #create variables
+    #[int32]$sleep = 5
+    #$portList = 20,21,22,23,25,42,53,67,68,69,80,110,119,123,135,137,138,139,143,161,162,389,443,445,636,873,993,995,1433,3306,3389,5800,5900
     $userAgents = [Microsoft.PowerShell.Commands.PSUserAgent].GetProperties() | Select-Object Name, @{n='UserAgent';e={ [Microsoft.PowerShell.Commands.PSUserAgent]::$($_.Name) }}
     $jsonResult = @{}
     $portError = @{}
-	#
+
     # Clear Terminal
     Clear-Host
     #
     # Allowed TLS/SSL Methods in Order of Attempt
     [Net.ServicePointManager]::SecurityProtocol = "Tls12, Tls11, Tls, Ssl3"
     #
-    # Check ports in $portList for outside connectivity on Public IP.
+    # Get the web content.
     for($i=1;$i -le $portList.Count; $i++){
       try{
         $Sleep = ($sleep - ($sleep/10))
@@ -38,7 +48,6 @@ function PokeBackIn
         $jsonResult[$i-1].content
         Write-Output ""
       }
-	  # If previous attempt fails, list reason why, throttle back timer, and try again.
       catch{
         $sleep = $sleep+5
         Write-Warning "HTTP $_. Response when probing port $($portList[$i-1])"
@@ -53,7 +62,6 @@ function PokeBackIn
             $jsonResult[$i-1].content
             Write-Output ""
         }
-		# If second attempt fails, warn console, add to $portError list, and continue to next entry in $portList
         catch{
           Write-Warning "Skipping Port $($portList[$i-1]): Too Much Fail."
           #Write-Warning "Http $_. Response when probing port $($portList[$i-1])"
@@ -63,12 +71,19 @@ function PokeBackIn
     }
     #
     # Output Ports that are reachable from the outside.
+    Write-Output ""
+    Write-Output "The following ports are reachable:"
+    $i=0
+    $openPorts=@{}
     Foreach ($content in ($jsonResult.values)){
       if($content.content.Contains('true')){
-        Write-Output $content.Content
+      $openPorts[$i] = $content.content
+      Write-Output $content.Content
       }
     }
     #
     # List ports that failed to test
-    Write-Output "Unable to test the following ports: "($portError.Values)
+    if ($portError.values -eq $true){
+    Write-Output "", "Unable to test the following ports: "($portError.Values)
+    }
 }
